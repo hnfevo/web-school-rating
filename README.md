@@ -7,17 +7,12 @@ Sistem penilaian sekolah berbasis web yang memungkinkan admin untuk mengelola in
 ### 🔐 Admin Dashboard
 - **Autentikasi**: Login/Register untuk admin
 - **Manajemen Institusi**: CRUD (Create, Read, Update, Delete) untuk data sekolah
-- **Manajemen Kriteria**: Kelola kriteria penilaian dinamis
 - **Penilaian Admin**: Input nilai berdasarkan kriteria yang telah ditentukan
-- **Dashboard Analytics**: Lihat statistik dan perbandingan nilai
 
 ### 🌐 Public Dashboard
 - **Akses Tanpa Login**: Siapa saja dapat mengakses
 - **Daftar Institusi**: Tampilan semua sekolah yang terdaftar
 - **Rating Publik**: Berikan rating bintang 1-5 untuk setiap sekolah
-- **Dual Score Display**: 
-  - **Nilai Admin**: Total dari kriteria yang dinilai admin
-  - **Nilai Publik**: Rata-rata rating dari masyarakat
 
 ## 🛠️ Tech Stack
 
@@ -183,14 +178,6 @@ PORT=5000
 
 ### Ratings
 - id, institutionId, criterionId, userId, score, isPublic, createdAt, updatedAt
-
-## 🎨 Fitur Unggulan
-
-1. **Dynamic Criteria System**: Admin dapat menambah/edit kriteria penilaian sesuai kebutuhan
-2. **Dual Rating System**: Menampilkan nilai dari admin dan publik secara terpisah
-3. **Weighted Scoring**: Nilai admin dihitung berdasarkan bobot kriteria
-4. **Public Access**: Dashboard publik dapat diakses tanpa login
-5. **Responsive Design**: Tampilan optimal di desktop dan mobile
 
 ---
 
