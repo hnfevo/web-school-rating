@@ -125,7 +125,7 @@ Frontend akan berjalan di `http://localhost:5173`
 ### 4️⃣ Akses Aplikasi
 
 - **Public Dashboard**: `http://localhost:5173/`
-- **Admin Login**: `http://localhost:5173/login`
+- **Admin Login**: `http://localhost:5173/#/login`
 
 **Default Admin Account** (jika menjalankan seeder):
 - Email: `admin@cazh.com`
