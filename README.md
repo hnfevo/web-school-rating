@@ -128,7 +128,7 @@ Frontend akan berjalan di `http://localhost:5173`
 - **Admin Login**: `http://localhost:5173/#/login`
 
 **Default Admin Account** (jika menjalankan seeder):
-- Email: `admin@cazh.com`
+- Email: `admin@example.com`
 - Password: `admin123`
 
 ## 📝 API Endpoints
