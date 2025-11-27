@@ -1,4 +1,4 @@
-# 🏫 School Rating System
+# 🏫 School Rating System 
 
 Sistem penilaian sekolah berbasis web yang memungkinkan admin untuk mengelola institusi dan kriteria penilaian, serta memungkinkan publik untuk memberikan rating terhadap sekolah.
 
