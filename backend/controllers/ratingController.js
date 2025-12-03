@@ -1,4 +1,4 @@
-import { AdminRating, PublicRating, Institution, Criterion } from '../models/index.js';
+import { getFirestore } from '../config/firebase.js';
 
 // Submit or update admin ratings (admin only)
 export const submitAdminRatings = async (req, res) => {
@@ -13,9 +13,11 @@ export const submitAdminRatings = async (req, res) => {
             });
         }
 
+        const db = getFirestore();
+
         // Verify institution exists
-        const institution = await Institution.findByPk(institutionId);
-        if (!institution) {
+        const institutionDoc = await db.collection('institutions').doc(institutionId).get();
+        if (!institutionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
@@ -24,31 +26,54 @@ export const submitAdminRatings = async (req, res) => {
 
         // Process each rating
         const results = [];
+        const batch = db.batch();
+
         for (const rating of ratings) {
             const { criterionId, score } = rating;
 
             // Verify criterion exists
-            const criterion = await Criterion.findByPk(criterionId);
-            if (!criterion) {
+            const criterionDoc = await db.collection('criteria').doc(criterionId).get();
+            if (!criterionDoc.exists) {
                 continue; // Skip invalid criteria
             }
+
+            const criterion = criterionDoc.data();
 
             // Validate score
             if (score < 0 || score > criterion.maxScore) {
                 continue; // Skip invalid scores
             }
 
-            // Upsert rating (update if exists, create if not)
-            const [adminRating, created] = await AdminRating.upsert({
-                institutionId,
-                criterionId,
-                score
-            }, {
-                returning: true
-            });
+            // Check if rating already exists
+            const existingRatingSnapshot = await db.collection('adminRatings')
+                .where('institutionId', '==', institutionId)
+                .where('criterionId', '==', criterionId)
+                .limit(1)
+                .get();
 
-            results.push(adminRating);
+            if (!existingRatingSnapshot.empty) {
+                // Update existing rating
+                const ratingDoc = existingRatingSnapshot.docs[0];
+                batch.update(ratingDoc.ref, {
+                    nilai: score,
+                    updatedAt: new Date()
+                });
+                results.push({ id: ratingDoc.id, institutionId, criterionId, nilai: score });
+            } else {
+                // Create new rating
+                const newRatingRef = db.collection('adminRatings').doc();
+                batch.set(newRatingRef, {
+                    institutionId,
+                    criterionId,
+                    nilai: score,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                results.push({ id: newRatingRef.id, institutionId, criterionId, nilai: score });
+            }
         }
+
+        await batch.commit();
 
         res.json({
             success: true,
@@ -69,10 +94,26 @@ export const getAdminRatings = async (req, res) => {
     try {
         const { institutionId } = req.params;
 
-        const ratings = await AdminRating.findAll({
-            where: { institutionId },
-            include: [Criterion]
-        });
+        const db = getFirestore();
+        const ratingsSnapshot = await db.collection('adminRatings')
+            .where('institutionId', '==', institutionId)
+            .get();
+
+        const ratings = await Promise.all(
+            ratingsSnapshot.docs.map(async (doc) => {
+                const ratingData = doc.data();
+
+                // Get criterion details
+                const criterionDoc = await db.collection('criteria').doc(ratingData.criterionId).get();
+                const criterion = criterionDoc.exists ? { id: criterionDoc.id, ...criterionDoc.data() } : null;
+
+                return {
+                    id: doc.id,
+                    ...ratingData,
+                    Criterion: criterion
+                };
+            })
+        );
 
         res.json({
             success: true,
@@ -107,9 +148,11 @@ export const submitPublicRating = async (req, res) => {
             });
         }
 
+        const db = getFirestore();
+
         // Verify institution exists
-        const institution = await Institution.findByPk(institutionId);
-        if (!institution) {
+        const institutionDoc = await db.collection('institutions').doc(institutionId).get();
+        if (!institutionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
@@ -120,17 +163,20 @@ export const submitPublicRating = async (req, res) => {
         const ipAddress = req.ip || req.connection.remoteAddress;
 
         // Create public rating
-        const publicRating = await PublicRating.create({
+        const publicRatingRef = await db.collection('publicRatings').add({
             institutionId,
             rating,
             comment: comment || null,
-            ipAddress
+            ipAddress,
+            createdAt: new Date()
         });
+
+        const publicRatingDoc = await publicRatingRef.get();
 
         res.status(201).json({
             success: true,
             message: 'Rating submitted successfully.',
-            data: publicRating
+            data: { id: publicRatingDoc.id, ...publicRatingDoc.data() }
         });
     } catch (error) {
         console.error('Submit public rating error:', error);
@@ -146,10 +192,20 @@ export const getPublicRatings = async (req, res) => {
     try {
         const { institutionId } = req.params;
 
-        const ratings = await PublicRating.findAll({
-            where: { institutionId },
-            order: [['createdAt', 'DESC']],
-            attributes: ['id', 'rating', 'comment', 'createdAt']
+        const db = getFirestore();
+        const ratingsSnapshot = await db.collection('publicRatings')
+            .where('institutionId', '==', institutionId)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const ratings = ratingsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                rating: data.rating,
+                comment: data.comment,
+                createdAt: data.createdAt
+            };
         });
 
         // Calculate average

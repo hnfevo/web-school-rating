@@ -1,58 +1,71 @@
-import { Institution, AdminRating, PublicRating, Criterion } from '../models/index.js';
-import { Op } from 'sequelize';
+import { getFirestore } from '../config/firebase.js';
 
 // Get all institutions with ratings
 export const getAllInstitutions = async (req, res) => {
     try {
-        const institutions = await Institution.findAll({
-            include: [
-                {
-                    model: AdminRating,
-                    include: [Criterion]
-                },
-                {
-                    model: PublicRating
-                }
-            ],
-            order: [['nama', 'ASC']]
-        });
+        const db = getFirestore();
 
-        // Calculate scores for each institution
-        const institutionsWithScores = institutions.map(inst => {
-            const instData = inst.toJSON();
+        // Get all institutions
+        const institutionsSnapshot = await db.collection('institutions').orderBy('nama', 'asc').get();
 
-            // Calculate admin score (weighted average)
-            let adminScore = null;
-            if (instData.AdminRatings && instData.AdminRatings.length > 0) {
-                let totalWeightedScore = 0;
-                let totalWeight = 0;
+        const institutionsWithScores = await Promise.all(
+            institutionsSnapshot.docs.map(async (doc) => {
+                const institutionData = { id: doc.id, ...doc.data() };
 
-                instData.AdminRatings.forEach(rating => {
-                    // CRITICAL FIX: Convert weight to number (database returns it as string)
-                    const weight = parseFloat(rating.Criterion.weight) || 1;
-                    totalWeightedScore += rating.score * weight;
-                    totalWeight += weight;
+                // Get admin ratings for this institution
+                const adminRatingsSnapshot = await db.collection('adminRatings')
+                    .where('institutionId', '==', doc.id)
+                    .get();
+
+                // Get criteria for weighted calculation
+                const criteriaSnapshot = await db.collection('criteria').get();
+                const criteriaMap = {};
+                criteriaSnapshot.docs.forEach(criterionDoc => {
+                    criteriaMap[criterionDoc.id] = criterionDoc.data();
                 });
 
-                adminScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) : null;
-            }
+                // Calculate admin score (weighted average)
+                let adminScore = null;
+                if (!adminRatingsSnapshot.empty) {
+                    let totalWeightedScore = 0;
+                    let totalWeight = 0;
 
-            // Calculate public score (average)
-            let publicScore = null;
-            let publicCount = 0;
-            if (instData.PublicRatings && instData.PublicRatings.length > 0) {
-                const sum = instData.PublicRatings.reduce((acc, rating) => acc + rating.rating, 0);
-                publicScore = sum / instData.PublicRatings.length;
-                publicCount = instData.PublicRatings.length;
-            }
+                    adminRatingsSnapshot.docs.forEach(ratingDoc => {
+                        const rating = ratingDoc.data();
+                        const criterion = criteriaMap[rating.criterionId];
+                        if (criterion) {
+                            const weight = parseFloat(criterion.bobot) || 1;
+                            totalWeightedScore += rating.nilai * weight;
+                            totalWeight += weight;
+                        }
+                    });
 
-            return {
-                ...instData,
-                adminScore: adminScore ? Math.round(adminScore * 10) / 10 : null,
-                publicScore: publicScore ? Math.round(publicScore * 10) / 10 : null,
-                publicRatingCount: publicCount
-            };
-        });
+                    adminScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) : null;
+                }
+
+                // Get public ratings for this institution
+                const publicRatingsSnapshot = await db.collection('publicRatings')
+                    .where('institutionId', '==', doc.id)
+                    .get();
+
+                // Calculate public score (average)
+                let publicScore = null;
+                let publicCount = publicRatingsSnapshot.size;
+                if (!publicRatingsSnapshot.empty) {
+                    const sum = publicRatingsSnapshot.docs.reduce((acc, ratingDoc) => {
+                        return acc + ratingDoc.data().rating;
+                    }, 0);
+                    publicScore = sum / publicCount;
+                }
+
+                return {
+                    ...institutionData,
+                    adminScore: adminScore ? Math.round(adminScore * 10) / 10 : null,
+                    publicScore: publicScore ? Math.round(publicScore * 10) / 10 : null,
+                    publicRatingCount: publicCount
+                };
+            })
+        );
 
         res.json({
             success: true,
@@ -71,29 +84,46 @@ export const getAllInstitutions = async (req, res) => {
 export const getInstitution = async (req, res) => {
     try {
         const { id } = req.params;
+        const db = getFirestore();
 
-        const institution = await Institution.findByPk(id, {
-            include: [
-                {
-                    model: AdminRating,
-                    include: [Criterion]
-                },
-                {
-                    model: PublicRating
-                }
-            ]
-        });
+        const institutionDoc = await db.collection('institutions').doc(id).get();
 
-        if (!institution) {
+        if (!institutionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
+        const institutionData = { id: institutionDoc.id, ...institutionDoc.data() };
+
+        // Get admin ratings
+        const adminRatingsSnapshot = await db.collection('adminRatings')
+            .where('institutionId', '==', id)
+            .get();
+
+        const adminRatings = adminRatingsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Get public ratings
+        const publicRatingsSnapshot = await db.collection('publicRatings')
+            .where('institutionId', '==', id)
+            .get();
+
+        const publicRatings = publicRatingsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
         res.json({
             success: true,
-            data: institution
+            data: {
+                ...institutionData,
+                AdminRatings: adminRatings,
+                PublicRatings: publicRatings
+            }
         });
     } catch (error) {
         console.error('Get institution error:', error);
@@ -116,16 +146,21 @@ export const createInstitution = async (req, res) => {
             });
         }
 
-        const institution = await Institution.create({
+        const db = getFirestore();
+        const institutionRef = await db.collection('institutions').add({
             nama,
             alamat,
-            email
+            email,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
+
+        const institutionDoc = await institutionRef.get();
 
         res.status(201).json({
             success: true,
             message: 'Institution created successfully.',
-            data: institution
+            data: { id: institutionDoc.id, ...institutionDoc.data() }
         });
     } catch (error) {
         console.error('Create institution error:', error);
@@ -142,24 +177,33 @@ export const updateInstitution = async (req, res) => {
         const { id } = req.params;
         const { nama, alamat, email } = req.body;
 
-        const institution = await Institution.findByPk(id);
-        if (!institution) {
+        const db = getFirestore();
+        const institutionRef = db.collection('institutions').doc(id);
+        const institutionDoc = await institutionRef.get();
+
+        if (!institutionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
-        await institution.update({
-            nama: nama || institution.nama,
-            alamat: alamat || institution.alamat,
-            email: email || institution.email
-        });
+        const updateData = {
+            updatedAt: new Date()
+        };
+
+        if (nama) updateData.nama = nama;
+        if (alamat) updateData.alamat = alamat;
+        if (email) updateData.email = email;
+
+        await institutionRef.update(updateData);
+
+        const updatedDoc = await institutionRef.get();
 
         res.json({
             success: true,
             message: 'Institution updated successfully.',
-            data: institution
+            data: { id: updatedDoc.id, ...updatedDoc.data() }
         });
     } catch (error) {
         console.error('Update institution error:', error);
@@ -175,15 +219,32 @@ export const deleteInstitution = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const institution = await Institution.findByPk(id);
-        if (!institution) {
+        const db = getFirestore();
+        const institutionRef = db.collection('institutions').doc(id);
+        const institutionDoc = await institutionRef.get();
+
+        if (!institutionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
-        await institution.destroy();
+        // Delete associated ratings
+        const adminRatingsSnapshot = await db.collection('adminRatings')
+            .where('institutionId', '==', id)
+            .get();
+
+        const publicRatingsSnapshot = await db.collection('publicRatings')
+            .where('institutionId', '==', id)
+            .get();
+
+        const batch = db.batch();
+        adminRatingsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        publicRatingsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        batch.delete(institutionRef);
+
+        await batch.commit();
 
         res.json({
             success: true,

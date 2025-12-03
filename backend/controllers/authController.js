@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/index.js';
+import { getFirestore } from '../config/firebase.js';
 
 // Register new admin user
 export const register = async (req, res) => {
@@ -15,9 +15,15 @@ export const register = async (req, res) => {
             });
         }
 
+        const db = getFirestore();
+
         // Check if user already exists
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
+        const existingUserSnapshot = await db.collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+
+        if (!existingUserSnapshot.empty) {
             return res.status(400).json({
                 success: false,
                 message: 'User with this email already exists.'
@@ -29,15 +35,19 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create user
-        const user = await User.create({
+        const userRef = await db.collection('users').add({
             name,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            createdAt: new Date()
         });
+
+        const userDoc = await userRef.get();
+        const userId = userDoc.id;
 
         // Generate token
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: userId, email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -47,9 +57,9 @@ export const register = async (req, res) => {
             message: 'User registered successfully.',
             data: {
                 user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email
+                    id: userId,
+                    name,
+                    email
                 },
                 token
             }
@@ -76,14 +86,24 @@ export const login = async (req, res) => {
             });
         }
 
+        const db = getFirestore();
+
         // Check if user exists
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
+        const userSnapshot = await db.collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+
+        if (userSnapshot.empty) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password.'
             });
         }
+
+        const userDoc = userSnapshot.docs[0];
+        const user = userDoc.data();
+        const userId = userDoc.id;
 
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -96,7 +116,7 @@ export const login = async (req, res) => {
 
         // Generate token
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: userId, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -106,7 +126,7 @@ export const login = async (req, res) => {
             message: 'Login successful.',
             data: {
                 user: {
-                    id: user.id,
+                    id: userId,
                     name: user.name,
                     email: user.email
                 },
@@ -125,20 +145,28 @@ export const login = async (req, res) => {
 // Get current user
 export const getCurrentUser = async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id, {
-            attributes: ['id', 'name', 'email', 'createdAt']
-        });
+        const db = getFirestore();
+        const userDoc = await db.collection('users').doc(req.user.id).get();
 
-        if (!user) {
+        if (!userDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found.'
             });
         }
 
+        const user = userDoc.data();
+
         res.json({
             success: true,
-            data: { user }
+            data: {
+                user: {
+                    id: userDoc.id,
+                    name: user.name,
+                    email: user.email,
+                    createdAt: user.createdAt
+                }
+            }
         });
     } catch (error) {
         console.error('Get current user error:', error);

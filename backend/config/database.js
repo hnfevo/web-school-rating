@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Serverless-optimized configuration
+const isProduction = process.env.NODE_ENV === 'production';
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -12,12 +15,19 @@ const sequelize = new Sequelize(
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
     logging: false,
+    // Optimized for serverless - single connection per function instance
     pool: {
-      max: 5,
+      max: isProduction ? 1 : 5,
       min: 0,
       acquire: 30000,
       idle: 10000
-    }
+    },
+    // SSL configuration for cloud databases (PlanetScale, etc)
+    dialectOptions: isProduction ? {
+      ssl: {
+        rejectUnauthorized: true
+      }
+    } : {}
   }
 );
 

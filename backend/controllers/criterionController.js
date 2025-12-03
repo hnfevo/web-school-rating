@@ -1,11 +1,17 @@
-import { Criterion } from '../models/index.js';
+import { getFirestore } from '../config/firebase.js';
 
 // Get all criteria
 export const getAllCriteria = async (req, res) => {
     try {
-        const criteria = await Criterion.findAll({
-            order: [['order', 'ASC'], ['id', 'ASC']]
-        });
+        const db = getFirestore();
+        const criteriaSnapshot = await db.collection('criteria')
+            .orderBy('order', 'asc')
+            .get();
+
+        const criteria = criteriaSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         res.json({
             success: true,
@@ -32,17 +38,22 @@ export const createCriterion = async (req, res) => {
             });
         }
 
-        const criterion = await Criterion.create({
+        const db = getFirestore();
+        const criterionRef = await db.collection('criteria').add({
             name,
             maxScore: maxScore || 10,
-            weight: weight || 1.00,
-            order: order || 0
+            bobot: weight || 1.00,  // Using 'bobot' to match existing frontend
+            order: order || 0,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
+
+        const criterionDoc = await criterionRef.get();
 
         res.status(201).json({
             success: true,
             message: 'Criterion created successfully.',
-            data: criterion
+            data: { id: criterionDoc.id, ...criterionDoc.data() }
         });
     } catch (error) {
         console.error('Create criterion error:', error);
@@ -59,25 +70,34 @@ export const updateCriterion = async (req, res) => {
         const { id } = req.params;
         const { name, maxScore, weight, order } = req.body;
 
-        const criterion = await Criterion.findByPk(id);
-        if (!criterion) {
+        const db = getFirestore();
+        const criterionRef = db.collection('criteria').doc(id);
+        const criterionDoc = await criterionRef.get();
+
+        if (!criterionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Criterion not found.'
             });
         }
 
-        await criterion.update({
-            name: name || criterion.name,
-            maxScore: maxScore !== undefined ? maxScore : criterion.maxScore,
-            weight: weight !== undefined ? weight : criterion.weight,
-            order: order !== undefined ? order : criterion.order
-        });
+        const updateData = {
+            updatedAt: new Date()
+        };
+
+        if (name !== undefined) updateData.name = name;
+        if (maxScore !== undefined) updateData.maxScore = maxScore;
+        if (weight !== undefined) updateData.bobot = weight;
+        if (order !== undefined) updateData.order = order;
+
+        await criterionRef.update(updateData);
+
+        const updatedDoc = await criterionRef.get();
 
         res.json({
             success: true,
             message: 'Criterion updated successfully.',
-            data: criterion
+            data: { id: updatedDoc.id, ...updatedDoc.data() }
         });
     } catch (error) {
         console.error('Update criterion error:', error);
@@ -93,15 +113,27 @@ export const deleteCriterion = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const criterion = await Criterion.findByPk(id);
-        if (!criterion) {
+        const db = getFirestore();
+        const criterionRef = db.collection('criteria').doc(id);
+        const criterionDoc = await criterionRef.get();
+
+        if (!criterionDoc.exists) {
             return res.status(404).json({
                 success: false,
                 message: 'Criterion not found.'
             });
         }
 
-        await criterion.destroy();
+        // Delete associated admin ratings
+        const adminRatingsSnapshot = await db.collection('adminRatings')
+            .where('criterionId', '==', id)
+            .get();
+
+        const batch = db.batch();
+        adminRatingsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        batch.delete(criterionRef);
+
+        await batch.commit();
 
         res.json({
             success: true,

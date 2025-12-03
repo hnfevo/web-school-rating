@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { sequelize, testConnection } from './config/database.js';
+import { initializeFirebase, testConnection } from './config/firebase.js';
 import authRoutes from './routes/authRoutes.js';
 import institutionRoutes from './routes/institutionRoutes.js';
 import criterionRoutes from './routes/criterionRoutes.js';
@@ -51,25 +51,37 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Initialize database and start server
-const startServer = async () => {
+// Initialize database
+const initDatabase = async () => {
     try {
-        // Test database connection
+        await initializeFirebase();
         await testConnection();
-
-        // Sync database (create tables if they don't exist)
-        await sequelize.sync({ alter: true });
-        console.log('✓ Database synchronized');
-
-        // Start server
-        app.listen(PORT, () => {
-            console.log(`✓ Server running on http://localhost:${PORT}`);
-            console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-        });
+        console.log('✓ Firebase initialized');
+        return true;
     } catch (error) {
-        console.error('✗ Failed to start server:', error);
-        process.exit(1);
+        console.error('✗ Firebase initialization failed:', error);
+        return false;
     }
 };
 
-startServer();
+// Start server (only when running locally, not in serverless)
+if (process.env.VERCEL !== '1') {
+    const startServer = async () => {
+        try {
+            await initDatabase();
+            app.listen(PORT, () => {
+                console.log(`✓ Server running on http://localhost:${PORT}`);
+                console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+            });
+        } catch (error) {
+            console.error('✗ Failed to start server:', error);
+            process.exit(1);
+        }
+    };
+
+    startServer();
+}
+
+// Export app for Vercel serverless
+export default app;
+export { initDatabase };
