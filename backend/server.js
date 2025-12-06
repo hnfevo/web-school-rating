@@ -1,7 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+<<<<<<< HEAD
 import { initializeFirebase, testConnection } from './config/firebase.js';
+=======
+import { sequelize, testConnection } from './config/database.js';
+>>>>>>> c1fe075 (first)
 import authRoutes from './routes/authRoutes.js';
 import institutionRoutes from './routes/institutionRoutes.js';
 import criterionRoutes from './routes/criterionRoutes.js';
@@ -51,6 +55,7 @@ app.use((err, req, res, next) => {
     });
 });
 
+<<<<<<< HEAD
 // Initialize database
 const initDatabase = async () => {
     try {
@@ -85,3 +90,27 @@ if (process.env.VERCEL !== '1') {
 // Export app for Vercel serverless
 export default app;
 export { initDatabase };
+=======
+// Initialize database and start server
+const startServer = async () => {
+    try {
+        // Test database connection
+        await testConnection();
+
+        // Sync database (create tables if they don't exist)
+        await sequelize.sync({ alter: true });
+        console.log('✓ Database synchronized');
+
+        // Start server
+        app.listen(PORT, () => {
+            console.log(`✓ Server running on http://localhost:${PORT}`);
+            console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+        });
+    } catch (error) {
+        console.error('✗ Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
+>>>>>>> c1fe075 (first)

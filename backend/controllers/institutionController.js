@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import { getFirestore } from '../config/firebase.js';
+=======
+import { Institution, AdminRating, PublicRating, Criterion } from '../models/index.js';
+import { Op } from 'sequelize';
+>>>>>>> c1fe075 (first)
 
 // Get all institutions with ratings
 export const getAllInstitutions = async (req, res) => {
     try {
+<<<<<<< HEAD
         const db = getFirestore();
 
         // Get all institutions
@@ -66,6 +72,57 @@ export const getAllInstitutions = async (req, res) => {
                 };
             })
         );
+=======
+        const institutions = await Institution.findAll({
+            include: [
+                {
+                    model: AdminRating,
+                    include: [Criterion]
+                },
+                {
+                    model: PublicRating
+                }
+            ],
+            order: [['nama', 'ASC']]
+        });
+
+        // Calculate scores for each institution
+        const institutionsWithScores = institutions.map(inst => {
+            const instData = inst.toJSON();
+
+            // Calculate admin score (weighted average)
+            let adminScore = null;
+            if (instData.AdminRatings && instData.AdminRatings.length > 0) {
+                let totalWeightedScore = 0;
+                let totalWeight = 0;
+
+                instData.AdminRatings.forEach(rating => {
+                    // CRITICAL FIX: Convert weight to number (database returns it as string)
+                    const weight = parseFloat(rating.Criterion.weight) || 1;
+                    totalWeightedScore += rating.score * weight;
+                    totalWeight += weight;
+                });
+
+                adminScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) : null;
+            }
+
+            // Calculate public score (average)
+            let publicScore = null;
+            let publicCount = 0;
+            if (instData.PublicRatings && instData.PublicRatings.length > 0) {
+                const sum = instData.PublicRatings.reduce((acc, rating) => acc + rating.rating, 0);
+                publicScore = sum / instData.PublicRatings.length;
+                publicCount = instData.PublicRatings.length;
+            }
+
+            return {
+                ...instData,
+                adminScore: adminScore ? Math.round(adminScore * 10) / 10 : null,
+                publicScore: publicScore ? Math.round(publicScore * 10) / 10 : null,
+                publicRatingCount: publicCount
+            };
+        });
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,
@@ -84,17 +141,35 @@ export const getAllInstitutions = async (req, res) => {
 export const getInstitution = async (req, res) => {
     try {
         const { id } = req.params;
+<<<<<<< HEAD
         const db = getFirestore();
 
         const institutionDoc = await db.collection('institutions').doc(id).get();
 
         if (!institutionDoc.exists) {
+=======
+
+        const institution = await Institution.findByPk(id, {
+            include: [
+                {
+                    model: AdminRating,
+                    include: [Criterion]
+                },
+                {
+                    model: PublicRating
+                }
+            ]
+        });
+
+        if (!institution) {
+>>>>>>> c1fe075 (first)
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
+<<<<<<< HEAD
         const institutionData = { id: institutionDoc.id, ...institutionDoc.data() };
 
         // Get admin ratings
@@ -124,6 +199,11 @@ export const getInstitution = async (req, res) => {
                 AdminRatings: adminRatings,
                 PublicRatings: publicRatings
             }
+=======
+        res.json({
+            success: true,
+            data: institution
+>>>>>>> c1fe075 (first)
         });
     } catch (error) {
         console.error('Get institution error:', error);
@@ -146,6 +226,7 @@ export const createInstitution = async (req, res) => {
             });
         }
 
+<<<<<<< HEAD
         const db = getFirestore();
         const institutionRef = await db.collection('institutions').add({
             nama,
@@ -161,6 +242,18 @@ export const createInstitution = async (req, res) => {
             success: true,
             message: 'Institution created successfully.',
             data: { id: institutionDoc.id, ...institutionDoc.data() }
+=======
+        const institution = await Institution.create({
+            nama,
+            alamat,
+            email
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Institution created successfully.',
+            data: institution
+>>>>>>> c1fe075 (first)
         });
     } catch (error) {
         console.error('Create institution error:', error);
@@ -177,17 +270,23 @@ export const updateInstitution = async (req, res) => {
         const { id } = req.params;
         const { nama, alamat, email } = req.body;
 
+<<<<<<< HEAD
         const db = getFirestore();
         const institutionRef = db.collection('institutions').doc(id);
         const institutionDoc = await institutionRef.get();
 
         if (!institutionDoc.exists) {
+=======
+        const institution = await Institution.findByPk(id);
+        if (!institution) {
+>>>>>>> c1fe075 (first)
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
+<<<<<<< HEAD
         const updateData = {
             updatedAt: new Date()
         };
@@ -199,11 +298,22 @@ export const updateInstitution = async (req, res) => {
         await institutionRef.update(updateData);
 
         const updatedDoc = await institutionRef.get();
+=======
+        await institution.update({
+            nama: nama || institution.nama,
+            alamat: alamat || institution.alamat,
+            email: email || institution.email
+        });
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,
             message: 'Institution updated successfully.',
+<<<<<<< HEAD
             data: { id: updatedDoc.id, ...updatedDoc.data() }
+=======
+            data: institution
+>>>>>>> c1fe075 (first)
         });
     } catch (error) {
         console.error('Update institution error:', error);
@@ -219,17 +329,23 @@ export const deleteInstitution = async (req, res) => {
     try {
         const { id } = req.params;
 
+<<<<<<< HEAD
         const db = getFirestore();
         const institutionRef = db.collection('institutions').doc(id);
         const institutionDoc = await institutionRef.get();
 
         if (!institutionDoc.exists) {
+=======
+        const institution = await Institution.findByPk(id);
+        if (!institution) {
+>>>>>>> c1fe075 (first)
             return res.status(404).json({
                 success: false,
                 message: 'Institution not found.'
             });
         }
 
+<<<<<<< HEAD
         // Delete associated ratings
         const adminRatingsSnapshot = await db.collection('adminRatings')
             .where('institutionId', '==', id)
@@ -245,6 +361,9 @@ export const deleteInstitution = async (req, res) => {
         batch.delete(institutionRef);
 
         await batch.commit();
+=======
+        await institution.destroy();
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,

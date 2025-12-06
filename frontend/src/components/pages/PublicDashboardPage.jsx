@@ -140,7 +140,11 @@ const PublicDashboardPage = ({ setPage }) => {
         return (
             <div>
                 <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+<<<<<<< HEAD
                     <h2>Daftar Sekolah</h2>
+=======
+                    <h2>Daftar Lembaga</h2>
+>>>>>>> c1fe075 (first)
                     <Button onClick={() => setPage('login')} className="btn-add">
                         Login Admin
                     </Button>
@@ -150,7 +154,11 @@ const PublicDashboardPage = ({ setPage }) => {
                         <thead>
                             <tr>
                                 <th>No</th>
+<<<<<<< HEAD
                                 <th>Nama Sekolah</th>
+=======
+                                <th>Nama Lembaga</th>
+>>>>>>> c1fe075 (first)
                                 <th>Alamat</th>
                                 <th>Rating Publik</th>
                                 <th>Aksi</th>

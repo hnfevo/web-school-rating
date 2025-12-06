@@ -39,6 +39,10 @@ const PenilaianTable = ({ data, onEdit }) => {
         item.AdminRatings.forEach(rating => {
             const criterion = criteria.find(c => c.id === rating.criterionId);
             if (criterion) {
+<<<<<<< HEAD
+=======
+                // CRITICAL FIX: Convert weight to number (database returns it as string)
+>>>>>>> c1fe075 (first)
                 const weight = parseFloat(criterion.weight) || 1;
                 totalWeightedScore += rating.score * weight;
                 totalWeight += weight;
@@ -58,7 +62,11 @@ const PenilaianTable = ({ data, onEdit }) => {
                 <thead>
                     <tr>
                         <th>No</th>
+<<<<<<< HEAD
                         <th>Nama Sekolah</th>
+=======
+                        <th>Nama Lembaga</th>
+>>>>>>> c1fe075 (first)
                         {criteria.map(criterion => (
                             <th key={criterion.id}>{criterion.name}</th>
                         ))}
@@ -93,8 +101,13 @@ const PenilaianTable = ({ data, onEdit }) => {
                                     </td>
                                 )}
                                 <td>
+<<<<<<< HEAD
                                     <Button onClick={() => onEdit(item)} className="btn-edit" title={hasScore ? 'Edit Nilai' : 'Lakukan Penilaian'}>
                                         {hasScore ? '✏️' : '📝'}
+=======
+                                    <Button onClick={() => onEdit(item)} className="btn-edit">
+                                        {hasScore ? 'Edit Nilai' : 'Lakukan Penilaian'}
+>>>>>>> c1fe075 (first)
                                     </Button>
                                 </td>
                             </tr>

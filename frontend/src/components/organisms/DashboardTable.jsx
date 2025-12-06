@@ -25,7 +25,11 @@ const DashboardTable = ({ data }) => {
                 <thead>
                     <tr>
                         <th>No</th>
+<<<<<<< HEAD
                         <th>Nama Sekolah</th>
+=======
+                        <th>Nama Lembaga</th>
+>>>>>>> c1fe075 (first)
                         <th>Nilai Admin</th>
                         <th>Rating Publik</th>
                         <th>Ranking</th>

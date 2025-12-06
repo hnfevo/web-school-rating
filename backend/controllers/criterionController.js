@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 import { getFirestore } from '../config/firebase.js';
+=======
+import { Criterion } from '../models/index.js';
+>>>>>>> c1fe075 (first)
 
 // Get all criteria
 export const getAllCriteria = async (req, res) => {
     try {
+<<<<<<< HEAD
         const db = getFirestore();
         const criteriaSnapshot = await db.collection('criteria')
             .orderBy('order', 'asc')
@@ -12,6 +17,11 @@ export const getAllCriteria = async (req, res) => {
             id: doc.id,
             ...doc.data()
         }));
+=======
+        const criteria = await Criterion.findAll({
+            order: [['order', 'ASC'], ['id', 'ASC']]
+        });
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,
@@ -38,6 +48,7 @@ export const createCriterion = async (req, res) => {
             });
         }
 
+<<<<<<< HEAD
         const db = getFirestore();
         const criterionRef = await db.collection('criteria').add({
             name,
@@ -54,6 +65,19 @@ export const createCriterion = async (req, res) => {
             success: true,
             message: 'Criterion created successfully.',
             data: { id: criterionDoc.id, ...criterionDoc.data() }
+=======
+        const criterion = await Criterion.create({
+            name,
+            maxScore: maxScore || 10,
+            weight: weight || 1.00,
+            order: order || 0
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Criterion created successfully.',
+            data: criterion
+>>>>>>> c1fe075 (first)
         });
     } catch (error) {
         console.error('Create criterion error:', error);
@@ -70,17 +94,23 @@ export const updateCriterion = async (req, res) => {
         const { id } = req.params;
         const { name, maxScore, weight, order } = req.body;
 
+<<<<<<< HEAD
         const db = getFirestore();
         const criterionRef = db.collection('criteria').doc(id);
         const criterionDoc = await criterionRef.get();
 
         if (!criterionDoc.exists) {
+=======
+        const criterion = await Criterion.findByPk(id);
+        if (!criterion) {
+>>>>>>> c1fe075 (first)
             return res.status(404).json({
                 success: false,
                 message: 'Criterion not found.'
             });
         }
 
+<<<<<<< HEAD
         const updateData = {
             updatedAt: new Date()
         };
@@ -93,11 +123,23 @@ export const updateCriterion = async (req, res) => {
         await criterionRef.update(updateData);
 
         const updatedDoc = await criterionRef.get();
+=======
+        await criterion.update({
+            name: name || criterion.name,
+            maxScore: maxScore !== undefined ? maxScore : criterion.maxScore,
+            weight: weight !== undefined ? weight : criterion.weight,
+            order: order !== undefined ? order : criterion.order
+        });
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,
             message: 'Criterion updated successfully.',
+<<<<<<< HEAD
             data: { id: updatedDoc.id, ...updatedDoc.data() }
+=======
+            data: criterion
+>>>>>>> c1fe075 (first)
         });
     } catch (error) {
         console.error('Update criterion error:', error);
@@ -113,17 +155,23 @@ export const deleteCriterion = async (req, res) => {
     try {
         const { id } = req.params;
 
+<<<<<<< HEAD
         const db = getFirestore();
         const criterionRef = db.collection('criteria').doc(id);
         const criterionDoc = await criterionRef.get();
 
         if (!criterionDoc.exists) {
+=======
+        const criterion = await Criterion.findByPk(id);
+        if (!criterion) {
+>>>>>>> c1fe075 (first)
             return res.status(404).json({
                 success: false,
                 message: 'Criterion not found.'
             });
         }
 
+<<<<<<< HEAD
         // Delete associated admin ratings
         const adminRatingsSnapshot = await db.collection('adminRatings')
             .where('criterionId', '==', id)
@@ -134,6 +182,9 @@ export const deleteCriterion = async (req, res) => {
         batch.delete(criterionRef);
 
         await batch.commit();
+=======
+        await criterion.destroy();
+>>>>>>> c1fe075 (first)
 
         res.json({
             success: true,

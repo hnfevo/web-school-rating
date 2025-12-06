@@ -5,7 +5,11 @@ const LembagaTable = ({ data, onEdit, onDelete, onAdd }) => (
     <div>
         <div className="table-container">
             <table className="table">
+<<<<<<< HEAD
                 <thead><tr><th>No</th><th>Nama Sekolah</th><th>Alamat</th><th>Email</th><th>Aksi</th></tr></thead>
+=======
+                <thead><tr><th>No</th><th>Nama Lembaga</th><th>Alamat</th><th>Email</th><th>Aksi</th></tr></thead>
+>>>>>>> c1fe075 (first)
                 <tbody>
                     {data.map((item, index) => (
                         <tr key={item.id}>
@@ -14,9 +18,15 @@ const LembagaTable = ({ data, onEdit, onDelete, onAdd }) => (
                             <td>{item.alamat}</td>
                             <td>{item.email}</td>
                             <td>
+<<<<<<< HEAD
                                 <div className="btn-group" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
                                     <Button onClick={() => onEdit(item)} className="btn-edit" title="Edit">✏️</Button>
                                     <Button onClick={() => onDelete(item)} className="btn-delete" title="Hapus">🗑️</Button>
+=======
+                                <div className="btn-group" style={{justifyContent: 'flex-start', marginTop: 0}}>
+                                    <Button onClick={() => onEdit(item)} className="btn-edit">Edit</Button>
+                                    <Button onClick={() => onDelete(item)} className="btn-delete">Delete</Button>
+>>>>>>> c1fe075 (first)
                                 </div>
                             </td>
                         </tr>
@@ -24,8 +34,13 @@ const LembagaTable = ({ data, onEdit, onDelete, onAdd }) => (
                 </tbody>
             </table>
         </div>
+<<<<<<< HEAD
         <div className="btn-group" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
             <Button onClick={onAdd} className="btn-add">Tambah Sekolah</Button>
+=======
+        <div className="btn-group" style={{justifyContent: 'flex-start', marginTop: '20px'}}>
+            <Button onClick={onAdd} className="btn-add">Tambah Lembaga</Button>
+>>>>>>> c1fe075 (first)
         </div>
     </div>
 );

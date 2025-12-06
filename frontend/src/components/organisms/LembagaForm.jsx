@@ -18,6 +18,7 @@ const LembagaForm = ({ item, onSave, onCancel }) => {
     };
 
     return (
+<<<<<<< HEAD
         <div className="form-container">
             <h2 style={{ marginBottom: '30px' }}>{item ? 'Edit Data Sekolah' : 'Tambah Sekolah Baru'}</h2>
             <form onSubmit={handleSubmit}>
@@ -42,6 +43,32 @@ const LembagaForm = ({ item, onSave, onCancel }) => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+=======
+         <div className="form-container">
+            <h2 style={{ marginBottom: '30px' }}>{item ? 'Edit Data Lembaga' : 'Tambah Lembaga Baru'}</h2>
+            <form onSubmit={handleSubmit}>
+                <InputField 
+                    label="Nama Lembaga" 
+                    name="nama" 
+                    value={formData.nama} 
+                    onChange={handleChange} 
+                    required 
+                />
+                <InputField 
+                    label="Alamat" 
+                    name="alamat" 
+                    value={formData.alamat} 
+                    onChange={handleChange} 
+                    required 
+                />
+                <InputField 
+                    label="Email" 
+                    name="email" 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    required 
+>>>>>>> c1fe075 (first)
                 />
                 <div className="btn-group">
                     <Button type="button" onClick={onCancel} className="btn-cancel">Batal</Button>

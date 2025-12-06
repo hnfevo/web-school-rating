@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # 🏫 School Rating System 
+=======
+# 🏫 CAZH School Rating System
+>>>>>>> c1fe075 (first)
 
 Sistem penilaian sekolah berbasis web yang memungkinkan admin untuk mengelola institusi dan kriteria penilaian, serta memungkinkan publik untuk memberikan rating terhadap sekolah.
 
@@ -7,12 +11,24 @@ Sistem penilaian sekolah berbasis web yang memungkinkan admin untuk mengelola in
 ### 🔐 Admin Dashboard
 - **Autentikasi**: Login/Register untuk admin
 - **Manajemen Institusi**: CRUD (Create, Read, Update, Delete) untuk data sekolah
+<<<<<<< HEAD
 - **Penilaian Admin**: Input nilai berdasarkan kriteria yang telah ditentukan
+=======
+- **Manajemen Kriteria**: Kelola kriteria penilaian dinamis
+- **Penilaian Admin**: Input nilai berdasarkan kriteria yang telah ditentukan
+- **Dashboard Analytics**: Lihat statistik dan perbandingan nilai
+>>>>>>> c1fe075 (first)
 
 ### 🌐 Public Dashboard
 - **Akses Tanpa Login**: Siapa saja dapat mengakses
 - **Daftar Institusi**: Tampilan semua sekolah yang terdaftar
 - **Rating Publik**: Berikan rating bintang 1-5 untuk setiap sekolah
+<<<<<<< HEAD
+=======
+- **Dual Score Display**: 
+  - **Nilai Admin**: Total dari kriteria yang dinilai admin
+  - **Nilai Publik**: Rata-rata rating dari masyarakat
+>>>>>>> c1fe075 (first)
 
 ## 🛠️ Tech Stack
 
@@ -125,10 +141,17 @@ Frontend akan berjalan di `http://localhost:5173`
 ### 4️⃣ Akses Aplikasi
 
 - **Public Dashboard**: `http://localhost:5173/`
+<<<<<<< HEAD
 - **Admin Login**: `http://localhost:5173/#/login`
 
 **Default Admin Account** (jika menjalankan seeder):
 - Email: `admin@example.com`
+=======
+- **Admin Login**: `http://localhost:5173/login`
+
+**Default Admin Account** (jika menjalankan seeder):
+- Email: `admin@cazh.com`
+>>>>>>> c1fe075 (first)
 - Password: `admin123`
 
 ## 📝 API Endpoints
@@ -179,6 +202,32 @@ PORT=5000
 ### Ratings
 - id, institutionId, criterionId, userId, score, isPublic, createdAt, updatedAt
 
+<<<<<<< HEAD
 ---
 
 **❤️**
+=======
+## 🎨 Fitur Unggulan
+
+1. **Dynamic Criteria System**: Admin dapat menambah/edit kriteria penilaian sesuai kebutuhan
+2. **Dual Rating System**: Menampilkan nilai dari admin dan publik secara terpisah
+3. **Weighted Scoring**: Nilai admin dihitung berdasarkan bobot kriteria
+4. **Public Access**: Dashboard publik dapat diakses tanpa login
+5. **Responsive Design**: Tampilan optimal di desktop dan mobile
+
+## 🤝 Kontribusi
+
+Silakan fork repository ini dan buat pull request untuk kontribusi Anda.
+
+## 📄 License
+
+ISC License
+
+## 👨‍💻 Author
+
+CAZH School Rating System
+
+---
+
+**Dibuat dengan ❤️ menggunakan React & Express**
+>>>>>>> c1fe075 (first)

@@ -2,6 +2,9 @@ node_modules/
 .env
 *.log
 .DS_Store
+<<<<<<< HEAD
 
 # Firebase service account
 firebase-service-account.json
+=======
+>>>>>>> c1fe075 (first)
